@@ -16,7 +16,7 @@ import java.util.Objects;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class Student extends PanacheEntity {
+public class Student {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
