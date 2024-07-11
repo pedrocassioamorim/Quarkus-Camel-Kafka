@@ -10,6 +10,7 @@ import net.producer.domain.Student;
 import net.producer.dtos.StudentDto;
 import net.producer.repositories.StudentRepository;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
+import org.hibernate.metamodel.mapping.ordering.ast.OrderByComplianceViolation;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.internal.bytebuddy.description.method.MethodDescription;
 
@@ -65,5 +66,46 @@ public class StudentResource {
         return Response.status(Response.Status.OK).entity(studentDtos).build();
     }
 
+    @GET @Path("/{cpf}") @Transactional
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response findByCpf(@PathParam("cpf") String cpf){
+        ModelMapper modelMapper = new ModelMapper();
+        Student student = studentRepository.find("cpf", cpf).firstResult();
+        if (student == null){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        StudentDto dto = modelMapper.map(student, StudentDto.class);
+        return Response.status(Response.Status.OK).entity(dto).build();
+    }
+
+    @PUT @Path("/{id}") @Transactional
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response update(@PathParam("id") Long id, @RequestBody StudentDto studentDto){
+        Student student = studentRepository.findById(id);
+        if (student == null){
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        student.setNome(studentDto.getNome());
+        student.setCpf(studentDto.getCpf());
+        student.setDataNascimento(studentDto.getDataNascimento());
+        studentRepository.persist(student);
+        return Response.status(Response.Status.OK).entity(student).build();
+    }
+
+    @DELETE @Path("/{id}") @Transactional
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response delete(@PathParam("id") Long id){
+        try{
+            Student student = studentRepository.findById(id);
+            if (student == null){
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+            studentRepository.delete(student);
+            return Response.status(Response.Status.NO_CONTENT).build();
+        }catch (OrderByComplianceViolation e){
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+
+    }
 
 }
