@@ -6,24 +6,22 @@ import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import net.producer.domain.Student;
 import net.producer.dtos.StudentDto;
-import net.producer.repositories.StudentRepository;
+
 import net.producer.services.StudentService;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.hibernate.metamodel.mapping.ordering.ast.OrderByComplianceViolation;
-import org.modelmapper.ModelMapper;
+
 
 import java.util.List;
 
 @Path("/students")
 public class StudentResource {
 
-    @Inject
-    StudentRepository studentRepository;
 
     @Inject
     StudentService studentService;
+
 
     @GET @Transactional
     @Produces(MediaType.APPLICATION_JSON)
@@ -32,6 +30,7 @@ public class StudentResource {
         return Response.status(Response.Status.OK).entity(studentDtos).build();
    }
 
+
    @POST @Transactional
    @Produces(MediaType.APPLICATION_JSON)
    public Response create(@RequestBody StudentDto dto){
@@ -39,7 +38,8 @@ public class StudentResource {
         return Response.status(Response.Status.CREATED).entity(studentDto).build();
    }
 
-   @GET @Path("/{id}") @Transactional
+
+   @GET @Path("/id/{id}") @Transactional
    @Produces(MediaType.APPLICATION_JSON)
    public Response findById(@PathParam("id") Long id){
         try{
@@ -50,7 +50,8 @@ public class StudentResource {
         }
    }
 
-    @GET @Path("/{nome}") @Transactional
+
+    @GET @Path("/nome/{nome}") @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     public Response findByName(@PathParam("nome") String nome){
         try{
@@ -61,7 +62,8 @@ public class StudentResource {
         }
     }
 
-    @GET @Path("/{cpf}") @Transactional
+
+    @GET @Path("/cpf/{cpf}") @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     public Response findByCpf(@PathParam("cpf") String cpf){
         try{
@@ -72,7 +74,8 @@ public class StudentResource {
         }
     }
 
-    @PUT @Path("/{id}") @Transactional
+
+    @PUT @Path("/id/{id}") @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     public Response update(@PathParam("id") Long id, @RequestBody StudentDto dto){
         try{
@@ -83,7 +86,8 @@ public class StudentResource {
         }
     }
 
-    @DELETE @Path("/{id}") @Transactional
+
+    @DELETE @Path("/id/{id}") @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("id") Long id){
         try{
