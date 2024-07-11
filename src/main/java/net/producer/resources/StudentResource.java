@@ -9,6 +9,7 @@ import jakarta.ws.rs.core.Response;
 import net.producer.domain.Student;
 import net.producer.dtos.StudentDto;
 import net.producer.repositories.StudentRepository;
+import net.producer.services.StudentService;
 import org.eclipse.microprofile.openapi.annotations.parameters.RequestBody;
 import org.hibernate.metamodel.mapping.ordering.ast.OrderByComplianceViolation;
 import org.modelmapper.ModelMapper;
@@ -21,86 +22,76 @@ public class StudentResource {
     @Inject
     StudentRepository studentRepository;
 
+    @Inject
+    StudentService studentService;
+
     @GET @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     public Response listAll(@QueryParam("pagina") int pagina, @QueryParam("tamanho") int tamanho) {
-        ModelMapper modelMapper = new ModelMapper();
-        List<Student> students = studentRepository.findAll().page(pagina, tamanho).list();
-        List<StudentDto> studentDtos = students.stream()
-                .map(student -> modelMapper.map(student, StudentDto.class))
-                .toList();
+        List<StudentDto> studentDtos = studentService.listAll(pagina, tamanho);
         return Response.status(Response.Status.OK).entity(studentDtos).build();
    }
 
    @POST @Transactional
    @Produces(MediaType.APPLICATION_JSON)
-   public Response create(@RequestBody StudentDto studentDto){
-        ModelMapper modelMapper = new ModelMapper();
-        Student student = modelMapper.map(studentDto, Student.class);
-        studentRepository.persist(student);
+   public Response create(@RequestBody StudentDto dto){
+        StudentDto studentDto = studentService.create(dto);
         return Response.status(Response.Status.CREATED).entity(studentDto).build();
    }
 
    @GET @Path("/{id}") @Transactional
    @Produces(MediaType.APPLICATION_JSON)
    public Response findById(@PathParam("id") Long id){
-        ModelMapper modelMapper = new ModelMapper();
-        Student student = studentRepository.findById(id);
-        if (student == null){
-            return Response.status(Response.Status.NOT_FOUND).build();
+        try{
+            StudentDto studentDto = studentService.findById(id);
+            return Response.status(Response.Status.OK).entity(studentDto).build();
+        }catch (NullPointerException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
-        StudentDto dto = modelMapper.map(student, StudentDto.class);
-        return Response.status(Response.Status.OK).entity(dto).build();
    }
 
     @GET @Path("/{nome}") @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     public Response findByName(@PathParam("nome") String nome){
-        ModelMapper modelMapper = new ModelMapper();
-        List<Student> students = studentRepository.find("nome", nome).stream().toList();
-        List<StudentDto> studentDtos = students.stream()
-                .map(student -> modelMapper.map(student, StudentDto.class))
-                .toList();
-        return Response.status(Response.Status.OK).entity(studentDtos).build();
+        try{
+            List<StudentDto> studentDtos = studentService.findByName(nome);
+            return Response.status(Response.Status.OK).entity(studentDtos).build();
+        }catch (NullPointerException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }
     }
 
     @GET @Path("/{cpf}") @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     public Response findByCpf(@PathParam("cpf") String cpf){
-        ModelMapper modelMapper = new ModelMapper();
-        Student student = studentRepository.find("cpf", cpf).firstResult();
-        if (student == null){
-            return Response.status(Response.Status.NOT_FOUND).build();
+        try{
+            StudentDto studentDto = studentService.findByCpf(cpf);
+            return Response.status(Response.Status.OK).entity(studentDto).build();
+        }catch (NullPointerException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
-        StudentDto dto = modelMapper.map(student, StudentDto.class);
-        return Response.status(Response.Status.OK).entity(dto).build();
     }
 
     @PUT @Path("/{id}") @Transactional
     @Produces(MediaType.APPLICATION_JSON)
-    public Response update(@PathParam("id") Long id, @RequestBody StudentDto studentDto){
-        Student student = studentRepository.findById(id);
-        if (student == null){
-            return Response.status(Response.Status.NOT_FOUND).build();
+    public Response update(@PathParam("id") Long id, @RequestBody StudentDto dto){
+        try{
+            StudentDto studentDto = studentService.update(id, dto);
+            return Response.status(Response.Status.OK).entity(studentDto).build();
+        }catch (NullPointerException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
         }
-        student.setNome(studentDto.getNome());
-        student.setCpf(studentDto.getCpf());
-        student.setDataNascimento(studentDto.getDataNascimento());
-        studentRepository.persist(student);
-        return Response.status(Response.Status.OK).entity(student).build();
     }
 
     @DELETE @Path("/{id}") @Transactional
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("id") Long id){
         try{
-            Student student = studentRepository.findById(id);
-            if (student == null){
-                return Response.status(Response.Status.NOT_FOUND).build();
-            }
-            studentRepository.delete(student);
-            return Response.status(Response.Status.NO_CONTENT).build();
-        }catch (OrderByComplianceViolation e){
+                studentService.delete(id);
+                return Response.status(Response.Status.NO_CONTENT).build();
+        }catch (NullPointerException e){
+            return Response.status(Response.Status.NOT_FOUND).entity(e.getMessage()).build();
+        }catch (OrderByComplianceViolation f){
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
 
